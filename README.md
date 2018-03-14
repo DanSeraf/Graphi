@@ -3,7 +3,7 @@
 ## Description
 
 Simple script written in R to create adjacency matrix and print it as a graph. It 
-uses the argparse library to get command line argument.
+uses the argparse library to get command line arguments.
 
 ## Usage
 
@@ -54,6 +54,6 @@ optional arguments:
 You need these libraries:
 
 *	`library("igraph")` - to create graph from the adjacency matrix
-*	`library("argparse")` - to parse command line argument
+*	`library("argparse")` - to parse command line arguments
 *	`library("cgwtools")` - to save the environment
 
