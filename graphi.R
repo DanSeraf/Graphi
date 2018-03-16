@@ -98,14 +98,14 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 				   },
 				   
 				   # Add node
-				   addNode = function(node_to_fun, value) {
+				   addNode = function(node_to_fun, node_value) {
 				   	check_node = checkNode(node_to_fun)
 				   	if(!is.null(check_node)) {
 						cat("[WARN] Node already present in matrix")
 					} else {
 						n_nodes <<- n_nodes + 1
 						position <- n_nodes
-						node <- Node$new(value=value, name=node_to_fun, pos=position) # Generate node object
+						node <- Node$new(value=node_value, name=node_to_fun, pos=position) # Generate node object
 						nodes_vector <<- c(nodes_vector, node) # Node vector update
 						value <- c()
 						# Create value list to store node name
@@ -278,15 +278,14 @@ search_node <- function(node_to_search) {
 # Bow set function
 set_bow <- function(bow_to_set) {
 	bow_to_set <- strsplit(bow_to_set, "") [[1]]
-	if(length(bow_to_set) == 3) {
-		x <- bow_to_set[1]
-		y <- bow_to_set[2]
-		value <- as.numeric(bow_to_set[3])
-		graph$addBow(x, y, value)
-
-	} else {
-		cat("[WARN] Wrong insertion")
+	x <- bow_to_set[1]
+	y <- bow_to_set[2]
+	store <- c()# Vector to store number
+	for (i in 3:length(bow_to_set)) {
+		store <- c(store, bow_to_set[i])
 	}
+	value <- as.numeric(paste(store, collapse=""))
+	graph$addBow(x, y, value)
 }
 
 # Remove bow function
@@ -320,13 +319,13 @@ remove_node <- function(node_to_remove) {
 # Add node function
 add_node <- function(node_to_add) {
 	node_to_add <- strsplit(node_to_add, "") [[1]]
-	if(length(node_to_add) == 2) {
-		node_to_fun <- node_to_add[1]
-		node_value <- node_to_add[2]
-		graph$addNode(node_to_fun, node_value)
-	} else {
-		cat("[WARN] Wrong insertion")
+	node_to_fun <- node_to_add[1]
+	store <- c()
+	for(i in 2:length(node_to_add)) {
+		store <- c(store, node_to_add[i])
 	}
+	node_value <- paste(store, collapse="")
+	graph$addNode(node_to_fun, node_value)
 }
 
 # Node value getter
@@ -337,11 +336,14 @@ get_node_value <- function(node_inserted) {
 # Update node value
 change_node_value <- function(node_inserted) {
 	node_inserted <- strsplit(node_inserted, "") [[1]]
-	if(length(node_inserted) == 2) {
-		node <- node_inserted[1]
-		node_value <- node_inserted[2]
-		graph$changeNodeValue(node, node_value)
-	} else {cat("[WARN] Wrong insertion")}
+	node <- node_inserted[1]
+	store <- c()
+	for(i in 2:length(node_inserted)) { 
+		store <- c(store, node_inserted[i])
+	}
+	node_value <- paste(store, collapse="")
+	graph$changeNodeValue(node, node_value)
+	
 }
 
 # Node connected to node given in input
