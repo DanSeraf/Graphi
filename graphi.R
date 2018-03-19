@@ -147,7 +147,7 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 
 				   verifyNodeConnected = function(node_inserted) {
 					check_node <- checkNode(node_inserted)
-				   	node_list <- c()
+				   	node_list <- c() # List that store all node(s) connected to node given in input
 				   	for(i in 1:n_nodes) {
 						if(adj_matrix[check_node, i] > 0) {
 							node_list <- c(node_list, nodes_vector[[i]]$name)
@@ -168,9 +168,25 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 				   	if(is.null(check_node)) {
 						cat("Node [", node_inserted , "] not present")
 					} else {cat("Node [", node_inserted , "] present")} 
+				   },
+					
+				   getAdjacencyList = function() {
+				   	cat("[ADJACENCY LIST]\n")
+				   	for(i in 1:n_nodes) {
+						nodes_list <- c()
+						check_node <- checkNode(nodes_vector[[i]]$name)
+						for(j in 1:n_nodes) {
+							if(adj_matrix[check_node, j] > 0) {
+								nodes_list <- c(nodes_list, nodes_vector[[j]]$name)
+							}
+						}
+						if(length(nodes_list) != 0) {
+							cat("[", nodes_vector[[i]]$name , "] --> [", nodes_list , "]\n")
+						}
+					}
+				   	
 				   }
-
-
+				
 				   
 				)
 )
@@ -178,7 +194,7 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 # Save file check
 check_save <- function() {
 	if (file.exists("save.RData")) {
-		cat("Save data present, do you want to delete that file [Y/n]: ")
+		cat("Save data present, do you want to delete the file [Y/n]: ")
 		req <- readLines("stdin", n=1)
 		if(req == "Y") {
 			file.remove("save.RData")
@@ -371,6 +387,11 @@ edge_list_creation <- function() {
 
 }
 
+# Adjacency list creation
+get_adjacency_list <- function() {
+	graph$getAdjacencyList()
+}
+
 # main function 
 main <- function() {
 	# Parse object creation
@@ -382,13 +403,15 @@ main <- function() {
 	parser$add_argument("-vm", "--view-matrix", action="store_true", default=FALSE,
 			    help="Display matrix in use")
 	parser$add_argument("-ed", "--edge-list", action="store_true", default=FALSE,
-			    help="Display edgelist of adjacency matrix")	
+			    help="Display edgelist of graph")	
 	parser$add_argument("-pg", "--plot-graph", action="store_true", default=FALSE,
 			    help="Create a graph from the current adjacency matrix")
+	parser$add_argument("-al", "--adjacency-list", action="store_true", default=FALSE,
+			    help="Display adjacency list of graph")
 	parser$add_argument("-i", "--import", type="character", 
 			    help="Import adjacency matrix from CSV file")
 	parser$add_argument("-sn", "--search-node", type="character", 
-			    help="Search node in the graph")
+			    help="Search node in graph")
 	parser$add_argument("-sb", "--set-bow", type="character",
 			    help="Set bow between nodes (EXAMPLE -sb ab5)")
 	parser$add_argument("-rb", "--remove-bow", type="character",
@@ -511,6 +534,12 @@ main <- function() {
 	if(isTRUE(args$edge_list)) {
 		if(isTRUE(verify_data)) {
 			edge_list_creation()
+		}
+	}
+
+	if(isTRUE(args$adjacency_list)) {
+		if(isTRUE(verify_data)) {
+			get_adjacency_list()
 		}
 	}
 }
