@@ -30,6 +30,16 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 				   	return(adj_matrix)
 				   },
 				   
+				   # Getter of nodes_vector
+				   getNodesVector = function() {
+					return(nodes_vector)
+				   },
+
+				   # Getter of nodes number
+				   getNodesNumber = function() {
+				   	return(n_nodes)	
+				   },
+
 				   # Show Matrix
 				   showAdjMatrix = function() {
 					cat("[ADJACENCY MATRIX]\n")
@@ -148,12 +158,16 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 				   verifyNodeConnected = function(node_inserted) {
 					check_node <- checkNode(node_inserted)
 				   	node_list <- c() # List that store all node(s) connected to node given in input
-				   	for(i in 1:n_nodes) {
+					for(i in 1:n_nodes) {
 						if(adj_matrix[check_node, i] > 0) {
 							node_list <- c(node_list, nodes_vector[[i]]$name)
 						}
 					}
-					cat("[*] Node connected to node [", node_inserted, "] --> [", node_list, "]")
+					if (length(node_list) == 0) {
+						cat("[*] No connection from node [", node_inserted ,"]")
+					} else {
+						cat("[*] Node connected to node [", node_inserted, "] --> [", node_list, "]")
+					}
 				   },
 					
 				   getBow = function(x, y) {
@@ -222,7 +236,7 @@ create_matrix <- function(user_input) {
 			cat("Write the value of the node: ")
 			node_value = readLines("stdin", n=1)
 			position = i
-			node <- Node$new(value=node_value, name=node_name, pos=position)
+			node <- Node$new(value=node_value, name=node_name, pos=position, checked="NO")
 			nodes_vect <- c(nodes_vect, node)	
 		}
 	
@@ -242,7 +256,6 @@ create_matrix <- function(user_input) {
 
 		# Create graph object with user input
 		graph <- Graph$new(n_nodes=user_input, adj_matrix=init_matrix, nodes_vector=nodes_vect)
-		cat("[*] Saving data")
 		save(graph, file="save.RData")
 	}
 	else {
@@ -273,7 +286,7 @@ import_matrix <- function(path) {
 	for (i in 1:nodes_number) {
 		value[[i]] <- nodes_vect[[i]]$name
 	}
-	
+	cat("[MATRIX]\n")	
 	print(imported_matrix)	
 	graph <- Graph$new(n_nodes=nodes_number, adj_matrix=imported_matrix, nodes_vector=nodes_vect)
 	cat("[*] Saving data")
@@ -319,8 +332,8 @@ rm_bow <- function(bow_to_remove) {
 plot_graph <- function() {
 	app_matrix <- graph$getAdjMatrix()
 	app_graph <- graph_from_adjacency_matrix(app_matrix, weighted=TRUE)
-	plot(app_graph, layout=layout.fruchterman.reingold(app_graph))
-	cat("[*] Graph correctly plotted to current working directory")
+	plot(app_graph, layout=layout_as_tree)
+	cat("[*] Graph correctly plotted to current working directory\n")
 }
 
 # Remove node function
@@ -383,7 +396,8 @@ get_bow <- function(nodes) {
 edge_list_creation <- function() {
 	adj_matrix <- graph$getAdjMatrix()
 	adj <- graph.adjacency(adj_matrix) # Convert the matrix to graph object
-	get.edgelist(adj)
+	cat("[EDGE LIST]\n")
+	print(get.edgelist(adj))
 
 }
 
@@ -392,17 +406,40 @@ get_adjacency_list <- function() {
 	graph$getAdjacencyList()
 }
 
+# Implementation of connection nodes
+get_connected_nodes <- function() {
+	nodes_vector <- graph$getNodesVector()
+	n_nodes <- graph$getNodesNumber()
+	print(n_nodes)
+	print(is.numeric(n_nodes))
+	adj_matrix <- graph$getAdjMatrix()
+	node_list <- c()
+	for(i in 1:n_nodes) {
+			node_list <- c(node_list, nodes_vector[[i]]$name)
+			node_list <- c(node_list, nodes_vector[[i]]$checked)
+	}
+	return(node_list)
+}
+
+# BSF implementation
+breadth_first_search <- function(start_node) {
+	node_list <- get_connected_nodes()
+	print(node_list)
+	print(start_node)
+	print(node_list[2])
+}
+
 # main function 
 main <- function() {
 	# Parse object creation
-	parser <- ArgumentParser(description="GRAPHI - Simple program to create adjacency matrix and plot it as graph")
+	parser <- ArgumentParser(description="GRAPHI - Simple program to create graph by adjacency matrix")
 
 	# Options
 	parser$add_argument("-c", "--create", action="store_true", default=FALSE,
 			    help="Create an adjacency matrix")
 	parser$add_argument("-vm", "--view-matrix", action="store_true", default=FALSE,
 			    help="Display matrix in use")
-	parser$add_argument("-ed", "--edge-list", action="store_true", default=FALSE,
+	parser$add_argument("-el", "--edge-list", action="store_true", default=FALSE,
 			    help="Display edgelist of graph")	
 	parser$add_argument("-pg", "--plot-graph", action="store_true", default=FALSE,
 			    help="Create a graph from the current adjacency matrix")
@@ -413,9 +450,9 @@ main <- function() {
 	parser$add_argument("-sn", "--search-node", type="character", 
 			    help="Search node in graph")
 	parser$add_argument("-sb", "--set-bow", type="character",
-			    help="Set bow between nodes (EXAMPLE -sb ab5)")
+			    help="Set bow between nodes (-sb [STR_NODE][END_NODE][VALUE])")
 	parser$add_argument("-rb", "--remove-bow", type="character",
-			    help="Remove bow between nodes (EXAMPLE -rb ab)")
+			    help="Remove bow between nodes (-rb [STR_NODE][END_NODE])")
 	parser$add_argument("-rn", "--remove-node", type="character",
 			    help="Remove node from the current adjacency matrix")
 	parser$add_argument("-an", "--add-node", type="character",
@@ -423,12 +460,13 @@ main <- function() {
 	parser$add_argument("-nv", "--node-value", type="character", 
 			    help="Display the value of the node inserted")
 	parser$add_argument("-cv", "--change-value", type="character",
-			    help="Change the value referred to node (EXAMPLE -cv a2)")
+			    help="Change the value referred to node (-cv [NODE][VALUE])")
 	parser$add_argument("-nc", "--node-connection", type="character",
 			    help="Display node(s) connected to input node")
 	parser$add_argument("-bv", "--bow-value", type="character", 
-			    help="Display bow value (example -gb ab)")
-	
+			    help="Display bow value (-gb [START_NODE][ENDNODE])")
+	parser$add_argument("-bs", "--breadth-search", type="character",
+			    help="Display graph after Breadth First Search algorithm")
 	args <- parser$parse_args()
 	
 	# Verify presence of save file
@@ -540,6 +578,13 @@ main <- function() {
 	if(isTRUE(args$adjacency_list)) {
 		if(isTRUE(verify_data)) {
 			get_adjacency_list()
+		}
+	}
+
+	if(is.character(args$breadth_search)) {
+		if(isTRUE(verify_data)) {
+			start_node <- as.character(args$breadth_search)
+			breadth_first_search(start_node)
 		}
 	}
 }
