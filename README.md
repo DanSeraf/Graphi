@@ -25,16 +25,19 @@ optional arguments:
   -h, --help            show this help message and exit
   -c, --create          Create an adjacency matrix
   -vm, --view-matrix    Display matrix in use
-  -ed, --edge-list      Display edgelist of adjacency matrix
+  -el, --edge-list      Display edgelist of graph
   -pg, --plot-graph     Create a graph from the current adjacency matrix
+  -al, --adjacency-list
+                        Display adjacency list of graph
   -i IMPORT, --import IMPORT
                         Import adjacency matrix from CSV file
   -sn SEARCH_NODE, --search-node SEARCH_NODE
-                        Search node in the graph
+                        Search node in graph
   -sb SET_BOW, --set-bow SET_BOW
-                        Set bow between nodes (EXAMPLE -sb ab5)
+                        Set bow between nodes (-sb
+                        [STR_NODE][END_NODE][VALUE])
   -rb REMOVE_BOW, --remove-bow REMOVE_BOW
-                        Remove bow between nodes (EXAMPLE -rb ab)
+                        Remove bow between nodes (-rb [STR_NODE][END_NODE])
   -rn REMOVE_NODE, --remove-node REMOVE_NODE
                         Remove node from the current adjacency matrix
   -an ADD_NODE, --add-node ADD_NODE
@@ -42,11 +45,13 @@ optional arguments:
   -nv NODE_VALUE, --node-value NODE_VALUE
                         Display the value of the node inserted
   -cv CHANGE_VALUE, --change-value CHANGE_VALUE
-                        Change the value referred to node (EXAMPLE -cv a2)
+                        Change the value referred to node (-cv [NODE][VALUE])
   -nc NODE_CONNECTION, --node-connection NODE_CONNECTION
                         Display node(s) connected to input node
   -bv BOW_VALUE, --bow-value BOW_VALUE
-                        Display bow value (example -gb ab)
+                        Display bow value (-gb [START_NODE][ENDNODE])
+  -bs BREADTH_SEARCH, --breadth-search BREADTH_SEARCH
+                        Display graph after Breadth First Search algorithm
 
 ```
 ## Library

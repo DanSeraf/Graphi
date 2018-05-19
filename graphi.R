@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-# Progetto totale Algoritmi e Strutture Dati
 
 # Load existent data
 if(file.exists("save.RData")) {
@@ -12,12 +11,12 @@ library("argparse")
 library("igraph")
 library("cgwtools")
 
-# Import node class
+# Files import
 source(paste(getwd(), "/node.R", sep=""))
+source(paste(getwd(), "/queue.R", sep=""))
 
-# Graph class 
+# graph class 
 Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix", nodes_vector="vector"),
-
 		    methods = list(
 				   # Update .RData file
 				   updateGraph = function() {
@@ -102,7 +101,7 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 						cat("[*] Node removed\n")
 						n_nodes <<- n_nodes - 1
 						adjustVector()
-						updateGraph()
+						updategraph()
 						showAdjMatrix()
 					}
 				   },
@@ -167,6 +166,7 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 						cat("[*] No connection from node [", node_inserted ,"]")
 					} else {
 						cat("[*] Node connected to node [", node_inserted, "] --> [", node_list, "]")
+						return(node_list)
 					}
 				   },
 					
@@ -184,8 +184,8 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 					} else {cat("Node [", node_inserted , "] present")} 
 				   },
 					
-				   getAdjacencyList = function() {
-				   	cat("[ADJACENCY LIST]\n")
+				   getAdjacencyList = function(adjacent) {
+				   	if (missing(adjacent)) cat("[ADJACENCY LIST]\n")
 				   	for(i in 1:n_nodes) {
 						nodes_list <- c()
 						check_node <- checkNode(nodes_vector[[i]]$name)
@@ -193,8 +193,15 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 							if(adj_matrix[check_node, j] > 0) {
 								nodes_list <- c(nodes_list, nodes_vector[[j]]$name)
 							}
+							
 						}
-						if(length(nodes_list) != 0) {
+						if(!missing(adjacent)){
+							if(nodes_vector[[i]]$name == adjacent) {
+								cat("[DEBUG-CLASS] ADJACENT ITEM", adjacent,"\n")
+								return(nodes_list)
+							}
+						}
+						else {
 							cat("[", nodes_vector[[i]]$name , "] --> [", nodes_list , "]\n")
 						}
 					}
@@ -219,11 +226,11 @@ check_save <- function() {
 }
 
 # Matrix creation function
-create_matrix <- function(user_input) {
+create_matrix <- function() {
 	cat("Write the numbers of vertices: ")
 	user_input <- readLines("stdin", n=1)
 	user_input <- as.numeric(user_input)
-	print(user_input)
+	cat("user input", user_input)
 	if (user_input > 0) {
 		# Initializating matrix
 		init_matrix <- matrix(0, nrow=user_input, ncol=user_input)
@@ -251,7 +258,7 @@ create_matrix <- function(user_input) {
 		rownames(init_matrix) <- value
 		colnames(init_matrix, do.NULL=TRUE, prefix="col")
 		colnames(init_matrix) <- value
-		cat("[MATRIX]\n")
+		cat("[ADJACENCY MATRIX]\n")
 		print(init_matrix)
 
 		# Create graph object with user input
@@ -411,7 +418,6 @@ get_connected_nodes <- function() {
 	nodes_vector <- graph$getNodesVector()
 	n_nodes <- graph$getNodesNumber()
 	print(n_nodes)
-	print(is.numeric(n_nodes))
 	adj_matrix <- graph$getAdjMatrix()
 	node_list <- c()
 	for(i in 1:n_nodes) {
@@ -421,12 +427,30 @@ get_connected_nodes <- function() {
 	return(node_list)
 }
 
-# BSF implementation
+# BFS implementationq	
 breadth_first_search <- function(start_node) {
-	node_list <- get_connected_nodes()
-	print(node_list)
-	print(start_node)
-	print(node_list[2])
+	adj_matrix <- graph$getAdjMatrix()
+	checked_node <- c()
+	if (!isSymmetric(adj_matrix)){
+		queue <- Queue$new()
+		queue$push(start_node)
+		checked_node <- c(start_node)
+		cat("[*] Start node [", start_node, "]\n") 
+		while (queue$len() > 0) {
+			cat("[DEBUG] CHECKED NODE VECTOR [", checked_node, "]\n")
+			curr <- queue$pop()
+			cat("[DEBUG] CURRENT NODE", curr,"\n")
+			adjacent_nodes <- graph$getAdjacencyList(curr)
+			cat("[DEBUG] ADJACENT NODES VECTOR [", adjacent_nodes, "]\n")
+			for (lato in adjacent_nodes) {
+				if(!(lato %in% checked_node)) {
+					checked_node <- c(checked_node, lato)
+					cat("[*] Node [", lato, "] checked\n")
+					queue$push(lato)
+				}		
+			}
+		}
+	} else {cat("[WARN] Graph must be oriented")}
 }
 
 # main function 
@@ -468,7 +492,7 @@ main <- function() {
 	parser$add_argument("-bs", "--breadth-search", type="character",
 			    help="Display graph after Breadth First Search algorithm")
 	args <- parser$parse_args()
-	
+		
 	# Verify presence of save file
 	verify_data <- file.exists("save.RData")
 	if (isTRUE(verify_data)) {
@@ -476,7 +500,7 @@ main <- function() {
 	} else {
 		cat("[*] Saved data not present in the current directory\n")
 	}
-
+	
 	if(isTRUE(args$create)) { 
 		check <- check_save()
 		if(isTRUE(check)){
