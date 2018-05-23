@@ -28,8 +28,36 @@ Queue = setRefClass("Queue", fields = list(data="list"),
 				   },
 				
 				   poll = function() {
-				   	if(size() == 0) return(NULL)
+				   	if(len() == 0) return(NULL)
 				   	else pop()
+				   },
+				   
+
+				   insertionSort = function() {
+					for (i in 2:len()) {
+						curr_value <- data[i]
+						j <- i
+						while (j > 1 && data[[j-1]] > curr_value[[1]]) {
+							data[j] <<- data[j-1]
+							j <- j - 1
+						}
+						data[j] <<- curr_value
+					}
+				   },
+
+				   showData = function() {
+				   	print(data)
+				   	print(len())
+				   },
+
+				   popDij = function() {
+					if(len() <= 1) {
+						pop()
+					} else {
+						insertionSort()
+						pop()
+					}
 				   }
+					
 				   )
 		    )

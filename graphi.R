@@ -94,14 +94,12 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 				   	if(is.null(check_node)) { # Check if node is not present
 						cat("[WARN] No such node in matrix")
 					} else {
-						if (nodes_vector[[check_node]]$pos == check_node) { # Check node position
-							nodes_vector <<- nodes_vector[-check_node] # Delete Node object from vector
-						}
+						nodes_vector <<- nodes_vector[-check_node] # Delete Node object from vector
 						adj_matrix <<- adj_matrix[-check_node, -check_node] 
 						cat("[*] Node removed\n")
 						n_nodes <<- n_nodes - 1
 						adjustVector()
-						updategraph()
+						updateGraph()
 						showAdjMatrix()
 					}
 				   },
@@ -140,6 +138,7 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 					} else {
 						get_value <- nodes_vector[[check_node]]$value
 						cat("[*] Value of node [", node_inserted ,"] -->", get_value)
+						return(get_value)
 					}
 				   },
 
@@ -158,7 +157,7 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 					check_node <- checkNode(node_inserted)
 				   	node_list <- c() # List that store all node(s) connected to node given in input
 					for(i in 1:n_nodes) {
-						if(adj_matrix[check_node, i] > 0) {
+						if(adj_matrix[check_node, i] != 0) {
 							node_list <- c(node_list, nodes_vector[[i]]$name)
 						}
 					}
@@ -170,10 +169,11 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 					}
 				   },
 					
-				   getBow = function(x, y) {
-				   	value <- adj_matrix[x,y] # Take bow value from matrix
-				   	if (value > 0) {
-				   		cat("[*] Value of bow [", x , "] --", value , "--> [", y , "]")
+				   getBow = function(x, y, flag = FALSE) {
+				   	value <- adj_matrix[x,y] # Get bow value from matrix
+				   	if (value != 0) {
+						if (flag == TRUE) return(value)
+						else cat("[*] Value of bow [", x , "] --", value , "--> [", y , "]")
 					} else {cat("[*] No bow (0 value)")}
 				   },
 				   
@@ -190,27 +190,22 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 						nodes_list <- c()
 						check_node <- checkNode(nodes_vector[[i]]$name)
 						for(j in 1:n_nodes) {
-							if(adj_matrix[check_node, j] > 0) {
+							if(adj_matrix[check_node, j] != 0) {
 								nodes_list <- c(nodes_list, nodes_vector[[j]]$name)
 							}
 							
 						}
 						if(!missing(adjacent)){
 							if(nodes_vector[[i]]$name == adjacent) {
-								cat("[DEBUG-CLASS] ADJACENT ITEM", adjacent,"\n")
 								return(nodes_list)
 							}
 						}
-						else {
-							cat("[", nodes_vector[[i]]$name , "] --> [", nodes_list , "]\n")
-						}
+						else cat("[", nodes_vector[[i]]$name , "] --> [", nodes_list , "]\n")
 					}
 				   	
 				   }
-				
-				   
 				)
-)
+			)
 
 # Save file check
 check_save <- function() {
@@ -288,15 +283,10 @@ import_matrix <- function(path) {
 		impnode <- Node$new(value=node_value, name=names_list[i], pos=i)
 		nodes_vect <- c(nodes_vect, impnode) 
 	}
-
-	value <- c()
-	for (i in 1:nodes_number) {
-		value[[i]] <- nodes_vect[[i]]$name
-	}
+	
 	cat("[MATRIX]\n")	
 	print(imported_matrix)	
 	graph <- Graph$new(n_nodes=nodes_number, adj_matrix=imported_matrix, nodes_vector=nodes_vect)
-	cat("[*] Saving data")
 	save(graph, file="save.RData")
 }
 
@@ -413,21 +403,7 @@ get_adjacency_list <- function() {
 	graph$getAdjacencyList()
 }
 
-# Implementation of connection nodes
-get_connected_nodes <- function() {
-	nodes_vector <- graph$getNodesVector()
-	n_nodes <- graph$getNodesNumber()
-	print(n_nodes)
-	adj_matrix <- graph$getAdjMatrix()
-	node_list <- c()
-	for(i in 1:n_nodes) {
-			node_list <- c(node_list, nodes_vector[[i]]$name)
-			node_list <- c(node_list, nodes_vector[[i]]$checked)
-	}
-	return(node_list)
-}
-
-# BFS implementationq	
+# BFS implementation
 breadth_first_search <- function(start_node) {
 	adj_matrix <- graph$getAdjMatrix()
 	checked_node <- c()
@@ -451,6 +427,44 @@ breadth_first_search <- function(start_node) {
 			}
 		}
 	} else {cat("[WARN] Graph must be oriented")}
+}
+
+# Dijkstra implementation
+dijkstra <- function(src_node) {
+	nodes_vect <- graph$getNodesVector()
+	n_nodes <- graph$getNodesNumber()
+	queue <- Queue$new()
+	distance <- c()
+	prev <- c()
+	for (i in 1:n_nodes){
+		distance[nodes_vect[[i]]$name] <- Inf
+	}
+	distance[src_node] <- 0
+	print(distance)
+	# Insert items in queue
+	for (i in 1:n_nodes) {
+		queue$push(distance[i])
+	}
+	while (queue$len() > 0) {
+		curr <- queue$popDij()
+		curr_name <- names(curr)
+		if(distance[[curr_name]] == Inf) {
+			break
+		}
+		adjacent_nodes <- graph$getAdjacencyList(curr_name)
+		cat("[DEBUG] Adjacent nodes of current node[", curr_name,"] --> [", adjacent_nodes, "]\n")
+		for (adjacent in adjacent_nodes){
+			dist_bow <- graph$getBow(curr_name, adjacent, flag = TRUE)
+			cat("[DEBUG] Distance of [", adjacent,"] --> [", dist_bow, "]\n")
+			alt <- distance[[curr_name]] + dist_bow
+			if (alt < distance[[adjacent]]){
+				distance[adjacent] <- alt
+				prev[adjacent] <- curr_name
+			}
+		}
+	}
+	cat("[*] Distance from source node [", src_node, "]\n")
+	print(distance)
 }
 
 # main function 
@@ -489,18 +503,15 @@ main <- function() {
 			    help="Display node(s) connected to input node")
 	parser$add_argument("-bv", "--bow-value", type="character", 
 			    help="Display bow value (-gb [START_NODE][ENDNODE])")
-	parser$add_argument("-bs", "--breadth-search", type="character",
-			    help="Display graph after Breadth First Search algorithm")
-	args <- parser$parse_args()
-		
-	# Verify presence of save file
-	verify_data <- file.exists("save.RData")
-	if (isTRUE(verify_data)) {
-		cat("[*] Loading saved data\n")
-	} else {
-		cat("[*] Saved data not present in the current directory\n")
-	}
+	parser$add_argument("-bfs", "--breadth-first-search", type="character",
+			    help="Display Breadth First Search algorithm (-bs [STR_NODE])")
+	parser$add_argument("-da", "--dijkstra-algorithm", type="character",
+			    help="Display Dijkstra algorithm (-da [STR_NODE])")
 	
+	args <- parser$parse_args()
+	notpres <- "[WARN] You must create the matrix first"
+	verify_data = file.exists("save.RData")
+
 	if(isTRUE(args$create)) { 
 		check <- check_save()
 		if(isTRUE(check)){
@@ -520,12 +531,8 @@ main <- function() {
 	}
 	
 	if(isTRUE(args$view_matrix)) {
-		if (isTRUE(verify_data)) {
-			view_matrix()
-		}
-		else {
-			cat("[WARN] You must create the matrix")
-		}
+		if (isTRUE(verify_data)) view_matrix()
+		else cat(notpres)
 	}
 
 	if(is.character(args$search_node)) {
@@ -544,72 +551,76 @@ main <- function() {
 	}
 
 	if(isTRUE(args$plot_graph)) {
-		if(isTRUE(verify_data)) {
-			plot_graph()
-		} else {
-			cat("[WARN] You must create the matrix")
-		}
+		if(isTRUE(verify_data)) plot_graph() 
+		else cat(notpres)
 	}
 
 	if(is.character(args$remove_node)) {
 		if(isTRUE(verify_data)) {
 			node_to_remove <- as.character(args$remove_node)
 			remove_node(node_to_remove)
-		}	    
+		} else cat(notpres) 
 	}
 
 	if(is.character(args$add_node)) {
 		if(isTRUE(verify_data)) {
 			node_to_add <- as.character(args$add_node)
 			add_node(node_to_add)
-		}
+		} else cat(notpres)
 	}
 
 	if(is.character(args$node_value)) {
 		if(isTRUE(verify_data)) {
 			node_inserted <- as.character(args$node_value)
 			get_node_value(node_inserted)
-		}
+		} else cat(notpres)
 	}
 
 	if(is.character(args$change_value)) {
 		if(isTRUE(verify_data)) {
 			node_inserted <- as.character(args$change_value)
 			change_node_value(node_inserted)
-		}
+		} else cat(notpres)
 	}
 
 	if(is.character(args$node_connection)) {
 		if(isTRUE(verify_data)) {
 			node_inserted <- as.character(args$node_connection)
 			node_connection(node_inserted)
-		}
+		} else cat(notpres)
 	}
 
 	if(is.character(args$bow_value)) {
 		if(isTRUE(verify_data)) {
 			nodes <- as.character(args$bow_value)
 			get_bow(nodes)
-		}
+		} else cat(notpres)
 	}
 
 	if(isTRUE(args$edge_list)) {
 		if(isTRUE(verify_data)) {
 			edge_list_creation()
-		}
+		} else cat(notpres)
 	}
 
 	if(isTRUE(args$adjacency_list)) {
 		if(isTRUE(verify_data)) {
 			get_adjacency_list()
-		}
+		} else cat(notpres)
 	}
 
-	if(is.character(args$breadth_search)) {
+	if(is.character(args$breadth_first_search)) {
 		if(isTRUE(verify_data)) {
-			start_node <- as.character(args$breadth_search)
+			start_node <- as.character(args$breadth_first_search)
 			breadth_first_search(start_node)
-		}
+		} else cat(notpres)
+	}
+
+	if(is.character(args$dijkstra_algorithm)) {
+		if(isTRUE(verify_data)) {
+			src_node <- as.character(args$dijkstra_algorithm)
+			dijkstra(src_node)
+		} else cat(notpres)
 	}
 }
 
