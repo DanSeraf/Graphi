@@ -26,12 +26,6 @@ Queue = setRefClass("Queue", fields = list(data="list"),
 					}
 
 				   },
-				
-				   poll = function() {
-				   	if(len() == 0) return(NULL)
-				   	else pop()
-				   },
-				   
 
 				   insertionSort = function() {
 					for (i in 2:len()) {

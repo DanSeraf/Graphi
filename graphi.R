@@ -202,7 +202,6 @@ Graph = setRefClass("Graph", fields=list(n_nodes="numeric", adj_matrix="matrix",
 						}
 						else cat("[", nodes_vector[[i]]$name , "] --> [", nodes_list , "]\n")
 					}
-				   	
 				   }
 				)
 			)
@@ -238,7 +237,7 @@ create_matrix <- function() {
 			cat("Write the value of the node: ")
 			node_value = readLines("stdin", n=1)
 			position = i
-			node <- Node$new(value=node_value, name=node_name, pos=position, checked="NO")
+			node <- Node$new(value=node_value, name=node_name, pos=position)
 			nodes_vect <- c(nodes_vect, node)	
 		}
 	
@@ -403,11 +402,11 @@ get_adjacency_list <- function() {
 	graph$getAdjacencyList()
 }
 
-# BFS implementation
+# Breadth First Search algorithm implementation
 breadth_first_search <- function(start_node) {
 	adj_matrix <- graph$getAdjMatrix()
-	checked_node <- c()
 	if (!isSymmetric(adj_matrix)){
+		checked_node <- c()
 		queue <- Queue$new()
 		queue$push(start_node)
 		checked_node <- c(start_node)
@@ -429,42 +428,133 @@ breadth_first_search <- function(start_node) {
 	} else {cat("[WARN] Graph must be oriented")}
 }
 
-# Dijkstra implementation
+# Dijkstra algorithm implementation
 dijkstra <- function(src_node) {
-	nodes_vect <- graph$getNodesVector()
-	n_nodes <- graph$getNodesNumber()
-	queue <- Queue$new()
-	distance <- c()
-	prev <- c()
-	for (i in 1:n_nodes){
-		distance[nodes_vect[[i]]$name] <- Inf
-	}
-	distance[src_node] <- 0
-	print(distance)
-	# Insert items in queue
-	for (i in 1:n_nodes) {
-		queue$push(distance[i])
-	}
-	while (queue$len() > 0) {
-		curr <- queue$popDij()
-		curr_name <- names(curr)
-		if(distance[[curr_name]] == Inf) {
-			break
+	adj_matrix <- graph$getAdjMatrix()
+	if (!isSymmetric(adj_matrix)){
+		nodes_vect <- graph$getNodesVector()
+		n_nodes <- graph$getNodesNumber()
+		queue <- Queue$new()
+		distance <- c()
+		prev <- c()
+		# Setup the distance vector 
+		for (i in 1:n_nodes){
+			distance[nodes_vect[[i]]$name] <- Inf
 		}
-		adjacent_nodes <- graph$getAdjacencyList(curr_name)
-		cat("[DEBUG] Adjacent nodes of current node[", curr_name,"] --> [", adjacent_nodes, "]\n")
-		for (adjacent in adjacent_nodes){
-			dist_bow <- graph$getBow(curr_name, adjacent, flag = TRUE)
-			cat("[DEBUG] Distance of [", adjacent,"] --> [", dist_bow, "]\n")
-			alt <- distance[[curr_name]] + dist_bow
-			if (alt < distance[[adjacent]]){
-				distance[adjacent] <- alt
-				prev[adjacent] <- curr_name
+		# Set the distance of source node to 0
+		distance[src_node] <- 0
+		print(distance)
+		# Insert items in queue
+		for (i in 1:n_nodes) {
+			queue$push(distance[i])
+		}
+		while (queue$len() > 0) {
+			# Get the node with lower value in queue
+			curr <- queue$popDij()
+			curr_name <- names(curr)
+			if(distance[[curr_name]] == Inf) {
+				break
+			}
+			adjacent_nodes <- graph$getAdjacencyList(curr_name)
+			cat("[DEBUG] Adjacent nodes of current node[", curr_name,"] --> [", adjacent_nodes, "]\n")
+			# Scroll every node in adjancent_nodes
+			for (adjacent in adjacent_nodes){
+				dist_bow <- graph$getBow(curr_name, adjacent, flag = TRUE)
+				cat("[DEBUG] Distance of [", adjacent,"] --> [", dist_bow, "]\n")
+				alt <- distance[[curr_name]] + dist_bow
+				if (alt < distance[[adjacent]]){
+					distance[adjacent] <- alt
+					prev[adjacent] <- curr_name
+				}
 			}
 		}
+		cat("[*] Distance from source node [", src_node, "]\n")
+		print(distance)
 	}
-	cat("[*] Distance from source node [", src_node, "]\n")
-	print(distance)
+}
+
+# Return the value of edge from input edge
+get_edge_value <- function(my_edge) {
+	my_edge <- strsplit(my_edge, "") [[1]]
+	store <- c()
+	for (i in 3:length(my_edge)) {
+		store <- c(store, my_edge[i])
+	}
+	value <- as.numeric(paste(store, collapse=""))
+	return(value)
+}
+
+# Order the vector of edges from minimum value to max
+kruskal_insertion_sort <- function(vect) {
+	for (e in 2:length(vect)) {
+		curr <- vect[e]
+		curr_value <- get_edge_value(vect[e])
+		prev_value <- get_edge_value(vect[e-1])
+		j <- e
+		while (j > 1 && prev_value > curr_value) {
+			vect[j] <- vect[j-1]
+			j <- j - 1
+		}
+		vect[j] <- curr
+	}
+	return(vect)
+}
+
+# Return the parent of node given in input if exists
+find_parent <- function(i, parent) {
+	if(i != parent[i]) parent[i] = find_parent(parent[i], parent)
+	return(parent[i])
+}
+
+# Get single node from edge in input (which is the position)
+get_edge <- function(my_edge, which = NULL) {
+	my_edge <- strsplit(my_edge, "") [[1]]
+	if(which == 1) return(my_edge[1])	
+	else return(my_edge[2])
+}
+
+# Kruskal algorithm implementation
+kruskal <- function() {
+	adj_matrix <- graph$getAdjMatrix()
+	if(isSymmetric(adj_matrix)){
+		n_nodes <- graph$getNodesNumber()
+		nodes_vect <- graph$getNodesVector()
+		edges <- c()
+		# Order edges
+		for(i in 1:n_nodes) {
+			curr_node <- nodes_vect[[i]]$name
+			adjacent_nodes <- graph$getAdjacencyList(curr_node)
+			for (adjacent in adjacent_nodes){
+				dist_bow <- graph$getBow(curr_node, adjacent, flag = TRUE)
+				conn <- paste(curr_node, adjacent, dist_bow, sep="")
+				cat("[DEBUG] EDGE: [", conn, "]\n")
+				edges <- c(edges, conn)
+			}
+		}
+		# Get ordered edges 
+		ordered_edges <- kruskal_insertion_sort(edges)
+		
+		# Search for edge with kruskal algorithm
+		parent <- c()
+		for (i in 1:n_nodes) {
+			node_name <- nodes_vect[[i]]$name
+			parent[node_name] <- i
+		}
+		min_spanning_tree_cost <- 0
+		min_spanning_tree <- c()
+		for (edge in ordered_edges) {
+			parent_a = find_parent(get_edge(edge, which = 1), parent)
+			parent_b = find_parent(get_edge(edge, which = 2), parent)
+			if (parent_a != parent_b) {
+				min_spanning_tree_cost = min_spanning_tree_cost + get_edge_value(edge)
+				min_spanning_tree = c(min_spanning_tree, edge)
+				parent[parent_a] <- parent_b
+			}
+		}
+		cat("[DEBUG] TOTAL COST:", min_spanning_tree_cost,"\n")
+		cat("[DEBUG] NODES \n")
+		print(min_spanning_tree)
+	} else {cat("[WARN] Graph must be undirected!")}
 }
 
 # main function 
@@ -507,7 +597,8 @@ main <- function() {
 			    help="Display Breadth First Search algorithm (-bs [STR_NODE])")
 	parser$add_argument("-da", "--dijkstra-algorithm", type="character",
 			    help="Display Dijkstra algorithm (-da [STR_NODE])")
-	
+	parser$add_argument("-ka", "--kruskal-algorithm", action="store_true", default=FALSE,
+			    help="Display kruskal-algorithm")
 	args <- parser$parse_args()
 	notpres <- "[WARN] You must create the matrix first"
 	verify_data = file.exists("save.RData")
@@ -620,6 +711,12 @@ main <- function() {
 		if(isTRUE(verify_data)) {
 			src_node <- as.character(args$dijkstra_algorithm)
 			dijkstra(src_node)
+		} else cat(notpres)
+	}
+
+	if(isTRUE(args$kruskal_algorithm)) {
+		if(isTRUE(verify_data)) {
+			kruskal()
 		} else cat(notpres)
 	}
 }
