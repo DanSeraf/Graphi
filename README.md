@@ -14,12 +14,13 @@ The graph will be printed in a pdf file.
 To see the commands type `./graphi.R --help`:
 
 ```
-usage: ./graphi.R [-h] [-c] [-vm] [-ed] [-pg] [-i IMPORT] [-sn SEARCH_NODE]
-                  [-sb SET_BOW] [-rb REMOVE_BOW] [-rn REMOVE_NODE]
-                  [-an ADD_NODE] [-nv NODE_VALUE] [-cv CHANGE_VALUE]
-                  [-nc NODE_CONNECTION] [-bv BOW_VALUE]
+usage: ./graphi.R [-h] [-c] [-vm] [-el] [-pg] [-al] [-i IMPORT]
+                  [-sn SEARCH_NODE] [-sb SET_BOW] [-rb REMOVE_BOW]
+                  [-rn REMOVE_NODE] [-an ADD_NODE] [-nv NODE_VALUE]
+                  [-cv CHANGE_VALUE] [-nc NODE_CONNECTION] [-bv BOW_VALUE]
+                  [-bfs BREADTH_FIRST_SEARCH] [-da DIJKSTRA_ALGORITHM] [-ka]
 
-GRAPHI - Simple program to create adjacency matrix and plot it as graph
+GRAPHI - Simple program to create graph by adjacency matrix
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -50,8 +51,13 @@ optional arguments:
                         Display node(s) connected to input node
   -bv BOW_VALUE, --bow-value BOW_VALUE
                         Display bow value (-gb [START_NODE][ENDNODE])
-  -bs BREADTH_SEARCH, --breadth-search BREADTH_SEARCH
-                        Display graph after Breadth First Search algorithm
+  -bfs BREADTH_FIRST_SEARCH, --breadth-first-search BREADTH_FIRST_SEARCH
+                        Display Breadth First Search algorithm (-bs
+                        [STR_NODE])
+  -da DIJKSTRA_ALGORITHM, --dijkstra-algorithm DIJKSTRA_ALGORITHM
+                        Display Dijkstra algorithm (-da [STR_NODE])
+  -ka, --kruskal-algorithm
+                        Display kruskal algorithm
 
 ```
 ## Library

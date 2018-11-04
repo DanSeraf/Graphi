@@ -327,8 +327,13 @@ rm_bow <- function(bow_to_remove) {
 # Plot graph function
 plot_graph <- function() {
 	app_matrix <- graph$getAdjMatrix()
-	app_graph <- graph_from_adjacency_matrix(app_matrix, weighted=TRUE)
-	plot(app_graph, layout=layout_as_tree)
+	if (!isSymmetric(app_matrix)){
+		app_graph <- graph_from_adjacency_matrix(app_matrix, weighted=TRUE, mode = "directed")
+		plot(app_graph, layout=layout_with_dh)
+	} else {
+		app_graph1 <- graph.adjacency(app_matrix, weighted=TRUE, mode = "undirected")
+		plot(app_graph1, layout=layout_nicely)
+	}
 	cat("[*] Graph correctly plotted to current working directory\n")
 }
 
@@ -416,7 +421,7 @@ breadth_first_search <- function(start_node) {
 			curr <- queue$pop()
 			cat("[DEBUG] CURRENT NODE", curr,"\n")
 			adjacent_nodes <- graph$getAdjacencyList(curr)
-			cat("[DEBUG] ADJACENT NODES VECTOR [", adjacent_nodes, "]\n")
+			cat("[DEBUG] ADJACENT NODES VECTOR OF [", curr, "] --> [", adjacent_nodes, "]\n")
 			for (lato in adjacent_nodes) {
 				if(!(lato %in% checked_node)) {
 					checked_node <- c(checked_node, lato)
@@ -470,7 +475,7 @@ dijkstra <- function(src_node) {
 		}
 		cat("[*] Distance from source node [", src_node, "]\n")
 		print(distance)
-	}
+	} else cat("[WARN] Graph must be oriented!")
 }
 
 # Return the value of edge from input edge
@@ -517,6 +522,7 @@ get_edge <- function(my_edge, which = NULL) {
 kruskal <- function() {
 	adj_matrix <- graph$getAdjMatrix()
 	if(isSymmetric(adj_matrix)){
+		start.time <- Sys.time()
 		n_nodes <- graph$getNodesNumber()
 		nodes_vect <- graph$getNodesVector()
 		edges <- c()
@@ -551,6 +557,9 @@ kruskal <- function() {
 				parent[parent_a] <- parent_b
 			}
 		}
+		end.time <- Sys.time()
+		time.taken <- end.time - start.time
+		cat("[DEBUG] Kruskal function time: ", time.taken,"\n")
 		cat("[DEBUG] TOTAL COST:", min_spanning_tree_cost,"\n")
 		cat("[DEBUG] NODES \n")
 		print(min_spanning_tree)
@@ -598,7 +607,7 @@ main <- function() {
 	parser$add_argument("-da", "--dijkstra-algorithm", type="character",
 			    help="Display Dijkstra algorithm (-da [STR_NODE])")
 	parser$add_argument("-ka", "--kruskal-algorithm", action="store_true", default=FALSE,
-			    help="Display kruskal-algorithm")
+			    help="Display kruskal algorithm")
 	args <- parser$parse_args()
 	notpres <- "[WARN] You must create the matrix first"
 	verify_data = file.exists("save.RData")
